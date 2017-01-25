@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block head %}
+  {{ super() }}
+{% endblock %}
+{% block content %}
+  {% for post in posts %}
+    <div class="post">
+        <div class="post-heading">
+          <div class="post-title">
+              <a href="/post/{{post.key().id()}}">{{post.title}}</a>
+          </div>
+        </div>
+        <pre class="post-content">{{post.body}}</pre>
+    </div>
+  {% endfor %}
+{% endblock %}

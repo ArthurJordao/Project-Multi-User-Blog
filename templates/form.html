@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}New Post{% endblock %}
+{% block head %}
+  {{ super() }}
+{% endblock %}
+{% block content %}
+  <form action="/newpost" method="post">
+    <label for="title">Subject:</label>
+    <input id="title" type="text" name="subject" value="{{title}}">
+    <br>
+    <label for="body">Content:</label>
+    <textarea name="content" id="body">{{body}}</textarea>
+    <div class="error">{{error}}</div>
+    <button type="submit">Post</button>
+  </form>
+{% endblock %}

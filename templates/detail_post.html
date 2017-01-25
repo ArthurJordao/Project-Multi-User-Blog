@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Details{% endblock %}
+{% block head %}
+  {{ super() }}
+{% endblock %}
+{% block content %}
+  <div class="post">
+      <div class="post-heading">
+        <div class="post-title">
+            <a href="/post/{{post.key().id()}}">{{post.title}}</a>
+        </div>
+      </div>
+      <pre class="post-content">{{post.body}}</pre>
+      <form action="/edit">
+        <input type="hidden" name="post_id" value="{{post_id}}">
+        <button type="submit">Edit</button>
+      </form>
+      <form action="/delete">
+        <input type="hidden" name="post_id" value="{{post_id}}">
+        <button type="submit">Delete</button>
+      </form>
+      {% if user %}
+        {% if not alredy_liked %}
+          <form action="/like" method="POST">
+            <input type="hidden" name="post_id" value="{{post_id}}">
+            <button type="submit">Like</button>
+          </form>
+        {% endif %}
+        {% if alredy_liked %}
+            <form action="/unlike" method="POST">
+              <input type="hidden" name="post_id" value="{{post_id}}">
+              <button type="submit">Unlike</button>
+            </form>
+        {% endif %}
+      {% endif %}
+      Number of likes {{number_of_likes}}
+      <h2>Comments</h1>
+      {% for comment in post.comments %}
+        <h3>{{comment.owner.username}}</h3>
+        <pre>{{comment.content}}</pre>
+        {% if user and comment.owner.username == user.username %}
+          <form action="/editcomment" method="GET">
+            <input type="hidden" name="comment_id" value="{{comment.key().id()}}">
+            <button type="submit">edit comment</button>
+          </form>
+          <form action="/removecomment" method="GET">
+            <input type="hidden" name="comment_id" value="{{comment.key().id()}}">
+            <button type="submit">remove comment</button>
+          </form>
+        {% endif %}
+      {% endfor %}
+      {% if user %}
+        <form action="/newcomment" method="GET">
+          <input type="hidden" name="post_id" value="{{post_id}}">
+          <button type="submit">New Comment</button>
+        </form>
+      {% endif %}
+  </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Delete post{% endblock %}
+{% block head %}
+  {{ super() }}
+{% endblock %}
+{% block content %}
+<h2>Delete post</h2>
+<p>Are you sure that you want delete the post "{{post.title}}"?</p>
+<form method="POST">
+    <input type="hidden" name="POST" value="{{post.key().id()}}">
+    <button type="submit">Yes</button>
+</form>
+<form action="/post/{{post.key().id()}}" method="GET">
+    <button type="submit">Cancel</button>
+</form>
+{% endblock %}

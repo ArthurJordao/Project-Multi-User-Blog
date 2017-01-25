@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}New Comment{% endblock %}
+{% block head %}
+  {{ super() }}
+{% endblock %}
+{% block content %}
+  <h2>New comment on the post "{{post.title}}"</h2>
+  <form action="/newcomment" method="post">
+    <label for="content">Content:</label>
+    <textarea name="content" id="content">{{content}}</textarea>
+    <div class="error">{{error}}</div>
+    <input type="hidden" name="post_id" value="{{post.key().id()}}">
+    <button type="submit">Comment</button>
+  </form>
+{% endblock %}
