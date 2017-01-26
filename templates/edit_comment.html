@@ -12,4 +12,7 @@
     <div class="error">{{error}}</div>
     <button type="submit">edit comment</button>
   </form>
+  <form action="/post/{{post_id}}" method="GET">
+    <button type="submit">Cancel</button>
+  </form>
 {% endblock %}

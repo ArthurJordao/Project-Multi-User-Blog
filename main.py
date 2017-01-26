@@ -10,7 +10,7 @@ SECRET = 'randomkey'  # Secret to hmac
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 JINJA_ENV = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
-                               autoescape=True) #Create templates config 
+                               autoescape=True)  # Create templates config
 
 
 class Handler(webapp2.RequestHandler):
@@ -18,6 +18,7 @@ class Handler(webapp2.RequestHandler):
     This class is a superclass to Handlers with some methods to render a
     template
     """
+
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
@@ -72,6 +73,7 @@ class MainPage(Handler):
     """
     this is a handler for the main page
     """
+
     def get(self):
         user = get_session_user(self)
         posts = Post.gql('order by created desc limit 10')
@@ -83,6 +85,7 @@ class NewPost(Handler):
     """
     this handler is for new posts on blog
     """
+
     def render_form(self, title='', body='', error=''):
         user = get_session_user(self)
         self.render('form.html', title=title, body=body, error=error,
@@ -91,12 +94,14 @@ class NewPost(Handler):
     def get(self):
         if not get_session_user(self):
             self.redirect('/login')
+            return
         self.render_form()
 
     def post(self):
         user = get_session_user(self)
         if not user:
             self.redirect('/login')
+            return
         title = self.request.get('subject')
         body = self.request.get('content')
 
@@ -114,6 +119,7 @@ class DeletePost(Handler):
     """
     this handler is for delete posts in the blog
     """
+
     def get(self):
         user = get_session_user(self)
         post = get_post_if_owner(self)
@@ -138,6 +144,7 @@ class EditPost(Handler):
     """
     This handler is for edit posts
     """
+
     def get(self):
         post = get_post_if_owner(self)
         user = get_session_user(self)
@@ -187,6 +194,7 @@ class PostHandler(Handler):
     """
     this handler is used to see the details of a Post
     """
+
     def get(self, post_id):
         post = Post.get_by_id(int(post_id))
 
@@ -210,6 +218,7 @@ class Signup(Handler):
     """
     this handler is for create new users
     """
+
     def get(self):
         user = get_session_user(self)
         if get_session_user(self):
@@ -250,8 +259,9 @@ class Signup(Handler):
         if has_error:
             self.render('signup.html', **kw)
         else:
+            db_password_hash = hash_string(password_input)
             new_user = User(username=username_input,
-                            password=password_input, email=email_input)
+                            password=db_password_hash, email=email_input)
             new_user.put()
             new_user_id = str(new_user.key().id())
 
@@ -267,6 +277,7 @@ class Welcome(Handler):
     """
     this handler redirect the users to the welcome page
     """
+
     def get(self):
         cookie = str(self.request.cookies.get('user'))
         valid_user = verify_cookie(cookie)
@@ -275,13 +286,14 @@ class Welcome(Handler):
             self.render('welcome.html', user=user)
         else:
             self.response.headers.add_header('Set-Cookie', 'user=')
-            self.redirect('/signup')
+            self.redirect('/login')
 
 
 class Login(Handler):
     """
     this handler is for user log in the SystemExit
     """
+
     def get(self):
         if get_session_user(self):
             self.redirect('/welcome')
@@ -296,7 +308,7 @@ class Login(Handler):
         user = q.get()
 
         if user:
-            if user.password == password_input:
+            if user.password == hash_string(password_input):
                 cookie_value = generate_cookie(str(user.key().id()))
 
                 self.response.headers.add_header(
@@ -311,6 +323,7 @@ class Logout(Handler):
     """
     this handler is for a user log out the system
     """
+
     def get(self):
         self.response.headers.add_header('Set-Cookie', 'user=; Path=/')
         self.redirect('/login')
@@ -320,6 +333,7 @@ class NewComment(Handler):
     """
     this handler is for new comments in a Post
     """
+
     def get(self):
         post_id = self.request.get('post_id')
         post = Post.get_by_id(int(post_id))
@@ -333,6 +347,7 @@ class NewComment(Handler):
 
         if not post:
             self.redirect('/')
+            return
 
         if not content:
             error = 'content needed'
@@ -353,15 +368,17 @@ class EditComment(Handler):
     """
     this handler is for edit comments in a Post
     """
+
     def get(self):
         comment = get_comment_if_owner(self)
         comment_id = self.request.get('comment_id')
+        post_id = comment.post.key().id()
 
         if not comment:
             return
 
         self.render('edit_comment.html', comment_id=comment_id,
-                    content=comment.content)
+                    content=comment.content, post_id=post_id)
 
     def post(self):
         comment = get_comment_if_owner(self)
@@ -386,6 +403,7 @@ class RemoveComment(Handler):
     """
     this handler is for remove comments in a Post
     """
+
     def get(self):
         comment = get_comment_if_owner(self)
         comment_id = self.request.get('comment_id')
@@ -409,14 +427,15 @@ class LikePost(Handler):
     """
     this handler is for like a Post
     """
+
     def post(self):
         user = get_session_user(self)
         if not user:
-            self.redirect('/')
+            self.redirect('/login')
             return
         post_id = self.request.get('post_id')
         post = Post.get_by_id(int(post_id))
-        if not post:
+        if not post or post.owner.key().id() == user.key().id():
             self.redirect('/')
             return
         like = get_user_like_from_post(user, post)
@@ -433,14 +452,15 @@ class UnlikePost(Handler):
     """
     this handler is for remove a like from a Post
     """
+
     def post(self):
         user = get_session_user(self)
         if not user:
-            self.redirect('/')
+            self.redirect('/login')
             return
         post_id = self.request.get('post_id')
         post = Post.get_by_id(int(post_id))
-        if not post:
+        if not post or post.owner.key().id() == user.key().id():
             self.redirect('/')
             return
         like = get_user_like_from_post(user, post)
@@ -530,7 +550,7 @@ def verify_pattern_string(pattern, string):
     RE = re.compile(pattern)
     return RE.match(string)
 
-#start the app
+# start the app
 app = webapp2.WSGIApplication([
     (r'/', MainPage),
     (r'/newpost', NewPost),
